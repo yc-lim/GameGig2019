@@ -10,7 +10,6 @@ function love.load()
   --game over or not
   gamegoingon = true;
 
-
   p1 = {}
   p1.name = "P1"
   p1.image = love.graphics.newImage("assets/tank.png")
