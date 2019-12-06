@@ -1,66 +1,3 @@
-<<<<<<< HEAD
---This is the simple map
-
-function love.load()
-   width = 20
-   height = 20
-   math.randomseed(os.time())
-   maze = {{}}
-
-   for i = 1,width do
-      for j = 1, height do
-         maze[i][j] = Cell
-      end
-   end
-   
-   Cell = {
-      cellType = "",
-      state = "",
-      fromy = 0 ,
-      fromx = 0 ,
-      UnSetUserLocation = false,
-      AddWall = function ( )
-      local obj = {
-      cellType = "wall",
-      state = "solid",
-      }
-      return obj
-      end,
-      AddPassage = function ( )
-      local obj = {
-      cellType = "passage",
-      state= "unvisited" ,
-      }
-      return obj
-      end,
-      SetVisited = function (self)
-     self.state = "visited"
-      end,
-      SetFinished = function (self)
-     self.state = "finished"
-      end,
-      BreakWall = function (self)
-     self.state = "broken"
-      end,
-      SetStart = function (self)
-      self.state= "start"
-      end,
-      SetEnd = function (self)
-     self.state= "end"
-      end,
-      SetFrom = function (self, y , x )
-     self.fromy = y
-     self.fromx = x
-      end,
-      SetUserLocation= function (self)
-     self.userLocation = true
-      end,
-      UnSetUserLocation = function (self)
-     self.userLocation = false
-      end
-      }
-end
-=======
 white = { 255, 255, 255, 255 }
 grey = { 128, 128, 128, 255 }
 red = { 255, 0, 0, 255 }
@@ -68,9 +5,9 @@ green = { 0, 255, 0, 255 }
 blue = { 0, 0, 255, 255 }
 gold = { 255, 215, 0, 255 }
 
-x_grid_max = 130
-y_grid_max = 99
-base_size = 50
+x_grid_max = 20
+y_grid_max = 20
+base_size = 20
 
 width  = base_size*(x_grid_max+1)
 height = base_size*(y_grid_max+1)
@@ -140,32 +77,28 @@ function love.draw()
 
 	love.graphics.rectangle("fill", player.grid_x*base_size, player.grid_y*base_size, 10, 10)
 end
+function love.update(dt)
+	if love.keyboard.isDown('right') then
+		if collide(0 , dt+0.5) and collide(0.5,dt+0.5) then
+		player.grid_x = player.grid_x + 1 * dt
+		end
+	
+	elseif love.keyboard.isDown('left') then
+		if collide(0, -dt) and collide(0.5,-dt) then
+			player.grid_x = player.grid_x - 1 * dt
+		end
 
-function love.keypressed(key)
-if key == "up" then
-	if collide(-1, 0) then
-	player.grid_y = player.grid_y - 1
-	end
-
-	elseif key == "down" then
-		if collide(1, 0) then
-		player.grid_y = player.grid_y + 1
-	end
-
-	elseif key == "left" then
-		if collide(0, -1) then
-		player.grid_x = player.grid_x - 1
-	end
-
-	elseif key == "right" then
-		if collide(0, 1) then
-		player.grid_x = player.grid_x + 1
-	end
-
-	elseif key == 'escape' then
-		love.event.push('quit')
+	elseif love.keyboard.isDown('up') then
+		if collide(-dt, 0) then
+			player.grid_y = player.grid_y - 1 * dt
+			end
+	elseif love.keyboard.isDown('down') then
+		if collide(dt+0.5, 0.5) then
+			player.grid_y = player.grid_y + 1 * dt
+		end
 	end
 end
+
 
 function generate_maze()
 	map = {}
@@ -268,11 +201,10 @@ end
 
 
 function collide(y, x)
-if map[player.grid_y + y][player.grid_x + x] ~= OPEN then
+if map[math.floor(player.grid_y + y)][math.floor(player.grid_x + x)] ~= OPEN then
 	return false
 end
 return true
 end
 
 
->>>>>>> da44eaa79c4ad90e3144472cf93ba91c1cf5a2d9
