@@ -1,5 +1,106 @@
 HC = require "HC"
 
+white = { 255, 255, 255, 255 }
+grey = { 128, 128, 128, 255 }
+red = { 255, 0, 0, 255 }
+green = { 0, 255, 0, 255 }
+blue = { 0, 0, 255, 255 }
+gold = { 255, 215, 0, 255 }
+
+base_size = 20
+x_grid_max = 20
+y_grid_max = 20
+
+width  = base_size*(x_grid_max+1)
+height = base_size*(y_grid_max+1)
+
+WATER = 2
+WALL = 1
+OPEN = 0
+
+
+function generate_maze()
+	map = {}
+	for i=0, y_grid_max do
+		map[i] = {}
+		for j=0, x_grid_max do
+			map[i][j] = WALL
+		end
+	end
+
+	for i=0, y_grid_max do
+		for j=0, x_grid_max do
+			map[0][j] = WATER
+			map[y_grid_max][j] = WATER
+		end
+	  map[i][x_grid_max] = WATER
+	  map[i][0] = WATER
+	end
+
+  map[maze.start.grid_y][maze.start.grid_x] = OPEN
+  walls = {
+    ["0102"] = { y=1, x=2 },
+    ["0201"] = { y=2, x=1 }
+  }
+
+  seen =  { ["0101"] = { x=1, y=1 } }
+
+  while next(walls) ~= nil do
+    key = rand_key(walls)
+
+    wall = walls[key]
+    walls[key] = nil
+    seen[key] = wall
+
+    y = wall.y
+    x = wall.x
+
+    north      = is_open(map, y-1, x)
+    south      = is_open(map, y+1, x)
+    west       = is_open(map, y,   x-1)
+    east       = is_open(map, y,   x+1)
+
+    is_center = (north and south) or (north and west) or (north and east) or
+          (south and west) or (south and east) or (east and west)
+
+    if not is_center then
+      map[y][x] = OPEN
+      add_wall(walls, seen, map, y-1, x) -- north
+      add_wall(walls, seen, map, y+1, x) -- south
+      add_wall(walls, seen, map, y, x-1) -- east
+      add_wall(walls, seen, map, y, x+1) -- west
+    end
+  end
+
+  for i=1, y_grid_max-1 do
+    if map[i][x_grid_max-1] == OPEN then
+      maze.exit.grid_y = i
+    end
+  end
+  return map
+end
+
+function add_wall(walls, seen, map, y, x)
+  key = string.format("%.2d%.2d", y, x)
+  if (map[y][x] == WALL) and (seen[key] == nil) then
+    walls[key] = { y=y, x=x }
+  end
+end
+
+function rand_key(hash)
+  ks = {}
+  for k,v in pairs(hash) do table.insert(ks, k) end
+  return ks[math.random(1, #ks)]
+end
+
+function is_open(map, y, x)
+  if map[y][x] == OPEN then
+    return true
+  else
+    return false
+  end
+end
+
 function love.load()
   screenW = 1280
   screenH = 720
@@ -26,27 +127,35 @@ function love.load()
   p2.alive = true
 
   bullets = {}
+
+  for x = 0, x_grid_max do
+	  for y = 0, y_grid_max do
+		  if map[x][y] == WALL then
+			  table.insert(hcs, HC.rectangle(x*base_size, y*base_size, base_size, base_size))
+		  end
+		end
+	end
 end
 
 function playerPlayerStop()
-  local collisions = HC.collisions(p1.box)
-  for other, v_d in pairs(collisions) do
-    if other == p2.box then
-      p1.box:move(v_d.x/2, v_d.y/2)
-      p2.box:move(-v_d.x/2, -v_d.y/2)
-      return true
-    end
-    return false
+  -- local collisions = HC.collisions(p1.box)
+  -- for other, v_d in pairs(collisions) do
+  local collide, dx, dy = p1.collidesWith(p2.box)
+  if collide then
+    p1.box:move(-dx/2, -dy/2)
+    p2.box:move(dx/2, dy/2)
+    return true
   end
+  return false
 end
 
 function playerWallStop(p)
   --b = true
   --while b do
-    local collisions = HC.collisions(p1.box)
-    for other, v_d in pairs(collisions) do
-      if false then
-        p.box:move(v_d)
+    for wall in hcs do
+      local collide, dx, dy = wall.collidesWith(p.box)
+      if collide then
+        p.box:move(dx, dy)
         break
       end
     end
@@ -54,14 +163,14 @@ function playerWallStop(p)
   --end
 end
 
+
 function shoot(p)
     local bullet = {}
-    bullet.x = p.x
-    bullet.y = p.y
-    bullet.speed = 500
-    bullet.angle = p.angle
-    bullet.vx = v*math.sin( p.angle )
-    bullet.vy = v*math.cos( p.angle )
+    bullet.x, bullet.y = p.box:center()
+    b_speed = 500
+    -- bullet.angle = p.angle
+    bullet.vx = b_speed * math.sin( p.box:rotation() )
+    bullet.vy = - b_speed * math.cos( p.box:rotation() )
     bullet.hitcircle = HC.point(bullet.x, bullet.y)
     bullet.reflectcount = 10
     table.insert( bullets,bullet )
@@ -70,7 +179,7 @@ end
 function updateBullets(dt)
     for i=1,#bullets do
         local bullet = bullets[i]
-        if bullet.reflectcount <1 then 
+        --[[if bullet.reflectcount <1 then 
             table.remove(bullets, i)
         end
         if map[math.floor(bullet.y + bullet.vy*dt)/20][ math.floor(bullet.x/20)] ~=OPEN then 
@@ -81,10 +190,10 @@ function updateBullets(dt)
             bullet.vx = - bullet.vx
             bullet.y = bullet.y + vx*dt
             bullet.reflectcount = bullet.reflectcount -1
-        else 
-            bullet.x = bullet.x + vx*dt
-            bullet.y = bullet.y + vx*dt
-        end
+        else ]]
+            bullet.x = bullet.x + bullet.vx * dt
+            bullet.y = bullet.y + bullet.vy * dt
+        --end
     end
 end
 
@@ -146,16 +255,37 @@ function drawPlayer(p)
 end
 
 function drawBullets()
-    for i=1,#bullets do
+  love.graphics.setColor(0, 0, 0)
+  for i=1, #bullets do
     local bullet = bullets[i]
-	love.graphics.circle('fill',bullet.x, bullet.y, 1)
-end
-
+	love.graphics.circle('fill', bullet.x, bullet.y, 1)
+  end
 end
 
 -- self.x = clamp(self.x + vx * dt, 0 + self.radius, nativeCanvasWidth - self.radius)
 function love.draw()
   if gamegoingon then
+    for x=0, x_grid_max do
+		  for y=0, y_grid_max do
+			  if map[y][x] == OPEN then
+
+				  love.graphics.setColor( white )
+				  love.graphics.rectangle("fill", x * base_size, y * base_size, base_size, base_size)
+
+			  elseif map[y][x] == WALL then
+
+				  love.graphics.setColor( grey )
+				  love.graphics.rectangle("line", x * base_size, y * base_size, base_size, base_size)
+
+			  elseif map[y][x] == WATER then
+
+				  love.graphics.setColor( blue )
+				  love.graphics.rectangle("fill", x * base_size, y * base_size, base_size, base_size)
+
+			  end
+		  end
+	  end
+
     love.graphics.setColor(200, 200, 200)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
     drawPlayer(p1)
