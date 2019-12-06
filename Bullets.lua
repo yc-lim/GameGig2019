@@ -1,3 +1,4 @@
+shapes = require 'HC.shapes'
 bullets = {}
 
 function shoot()
@@ -9,6 +10,7 @@ function shoot()
     bullet.vx = v*math.sin( self.angle )
     bullet.vy = v*math.cos( self.angle )
     table.insert( bullets,bullet )
+    bullet.hitcircle = newCircleShape(bullet.x, bullet.y, radius)
 end
 
 function bulletmove(bul)
