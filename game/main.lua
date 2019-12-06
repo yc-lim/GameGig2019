@@ -4,8 +4,12 @@ function love.load()
   screenW = 1280
   screenH = 720
   love.window.setMode(screenW, screenH)
-
+  
   startX = 35
+
+  --game over or not
+  gamegoingon = false;
+
 
   p1 = {}
   p1.name = "P1"
@@ -99,11 +103,19 @@ end
 
 -- self.x = clamp(self.x + vx * dt, 0 + self.radius, nativeCanvasWidth - self.radius)
 function love.draw()
-  love.graphics.setColor(200, 200, 200)
-  love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-  
-  drawPlayer(p1)
-  drawPlayer(p2)
+  if gamegoingon then
+    love.graphics.setColor(200, 200, 200)
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+    drawPlayer(p1)
+    drawPlayer(p2)
+  else
+    love.graphics.setFont( 34 )
+    if p1.alive then
+        love.graphics.print("Game Over, P1 wins",screenW/2, screenH/2, 'center' )
+    else
+        love.graphics.print("Game Over, p2 wins",screenW/2, screenH/2, 'center' )
+    end
+  end
 end
 
 
