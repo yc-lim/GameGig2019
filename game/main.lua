@@ -7,9 +7,9 @@ green = { 0, 255, 0, 255 }
 blue = { 0, 0, 255, 255 }
 gold = { 255, 215, 0, 255 }
 
-base_size = 20
-x_grid_max = 20
-y_grid_max = 20
+base_size = 100
+x_grid_max = 10
+y_grid_max = 10
 
 width  = base_size*(x_grid_max+1)
 height = base_size*(y_grid_max+1)
@@ -18,6 +18,8 @@ WATER = 2
 WALL = 1
 OPEN = 0
 
+startX = base_size + 10
+B_DELAY = 0.5
 
 function generate_maze()
 	map = {}
@@ -82,7 +84,7 @@ end
 
 function add_wall(walls, seen, map, y, x)
   key = string.format("%.2d%.2d", y, x)
-  if (map[y][x] == WALL) and (seen[key] == nil) then
+  if (map[x][y] == WALL) and (seen[key] == nil) then
     walls[key] = { y=y, x=x }
   end
 end
@@ -94,7 +96,7 @@ function rand_key(hash)
 end
 
 function is_open(map, y, x)
-  if map[y][x] == OPEN then
+  if map[x][y] == OPEN then
     return true
   else
     return false
@@ -106,7 +108,6 @@ function love.load()
   screenH = 720
   love.window.setMode(screenW, screenH)
   
-  startX = 35
 
   --game over or not
   gamegoingon = true;
@@ -117,6 +118,7 @@ function love.load()
   local w , h = p1.image:getDimensions()
   p1.box = HC.rectangle(startX, screenH/2, w, h)
   p1.box:setRotation(math.pi/2)
+  p1.bdelay = 0
   p1.alive = true;
 
   p2 = {}
@@ -124,14 +126,31 @@ function love.load()
   p2.image = love.graphics.newImage("assets/tank.png")
   p2.box = HC.rectangle(screenW - h - startX, screenH/2, w, h)
   p2.box:setRotation(- math.pi/2)
+  p2.bdelay = 0
   p2.alive = true
 
   bullets = {}
+  
+	player = {grid_x = 1,grid_y = 1,}
+	maze = {
+	  ["exit"] = {
+	    grid_x = x_grid_max - 1,
+	    grid_y = y_grid_max - 1
+	  },
+	  ["start"] = {
+	    grid_x = 1,
+	    grid_y = 1
+	  }
+	}
+	time = os.time()
+	math.randomseed( time )
+	map = generate_maze()
+	hcs = {}
 
   for x = 0, x_grid_max do
 	  for y = 0, y_grid_max do
 		  if map[x][y] == WALL then
-			  table.insert(hcs, HC.rectangle(x*base_size, y*base_size, base_size, base_size))
+			  table.insert(hcs, HC.rectangle((x+0.5)*base_size, (y+0.5)*base_size, base_size, base_size))
 		  end
 		end
 	end
@@ -140,7 +159,7 @@ end
 function playerPlayerStop()
   -- local collisions = HC.collisions(p1.box)
   -- for other, v_d in pairs(collisions) do
-  local collide, dx, dy = p1.collidesWith(p2.box)
+  local collide, dx, dy = p1.box:collidesWith(p2.box)
   if collide then
     p1.box:move(-dx/2, -dy/2)
     p2.box:move(dx/2, dy/2)
@@ -152,10 +171,11 @@ end
 function playerWallStop(p)
   --b = true
   --while b do
-    for wall in hcs do
-      local collide, dx, dy = wall.collidesWith(p.box)
+    for i=1, #hcs do
+      local wall = hcs[i]
+      local collide, dx, dy = wall:collidesWith(p.box)
       if collide then
-        p.box:move(dx, dy)
+        p.box:move(-dx, -dy)
         break
       end
     end
@@ -199,7 +219,7 @@ end
 
 function updatePlayer(p, dt)
   local speed = 200
-  local angularV = math.pi/6
+  local angularV = math.pi/4
   local v = 0
   local w = 0
 
@@ -216,7 +236,12 @@ function updatePlayer(p, dt)
       w = angularV
     end
     if love.keyboard.isDown('space') then 
-      shoot (p)
+      if p.bdelay > 0 then
+        p.bdelay = p.bdelay - dt
+      else
+        shoot (p)
+        p.bdelay = B_DELAY
+      end
     end
   else
     if love.keyboard.isDown('up') then
@@ -230,7 +255,12 @@ function updatePlayer(p, dt)
       w = angularV
     end
     if love.keyboard.isDown('kp0') then 
-      shoot(p)
+      if p.bdelay > 0 then
+        p.bdelay = p.bdelay - dt
+      else
+        shoot (p)
+        p.bdelay = B_DELAY
+      end
     end
   end
 
@@ -251,6 +281,7 @@ end
 function drawPlayer(p)
   local W, H = p.image:getDimensions()
   local x, y = p.box:center()
+  love.graphics.setColor(255, 255, 255)
   love.graphics.draw(p.image, x, y, p.box:rotation(), 1, 1, W/2, H/2)
 end
 
@@ -258,7 +289,7 @@ function drawBullets()
   love.graphics.setColor(0, 0, 0)
   for i=1, #bullets do
     local bullet = bullets[i]
-	love.graphics.circle('fill', bullet.x, bullet.y, 1)
+	love.graphics.circle('fill', bullet.x, bullet.y, 3)
   end
 end
 
@@ -267,27 +298,27 @@ function love.draw()
   if gamegoingon then
     for x=0, x_grid_max do
 		  for y=0, y_grid_max do
-			  if map[y][x] == OPEN then
+			  if map[x][y] == OPEN then
 
 				  love.graphics.setColor( white )
 				  love.graphics.rectangle("fill", x * base_size, y * base_size, base_size, base_size)
 
-			  elseif map[y][x] == WALL then
+			  elseif map[x][y] == WALL then
 
 				  love.graphics.setColor( grey )
 				  love.graphics.rectangle("line", x * base_size, y * base_size, base_size, base_size)
 
-			  elseif map[y][x] == WATER then
+			  elseif map[x][y] == WATER then
 
-				  love.graphics.setColor( blue )
+				  love.graphics.setColor( white )
 				  love.graphics.rectangle("fill", x * base_size, y * base_size, base_size, base_size)
 
 			  end
 		  end
 	  end
 
-    love.graphics.setColor(200, 200, 200)
-    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+    --love.graphics.setColor(200, 200, 200)
+    --love.graphics.rectangle("fill", 0, 0, screenW, screenH)
     drawPlayer(p1)
     drawPlayer(p2)
     drawBullets()
