@@ -59,7 +59,6 @@ function shoot(p)
     bullet.x = p.x
     bullet.y = p.y
     bullet.speed = 500
-    bullet.angle = p.angle
     bullet.vx = v*math.sin( p.angle )
     bullet.vy = v*math.cos( p.angle )
     bullet.hitcircle = HC.point(bullet.x, bullet.y)
@@ -77,13 +76,13 @@ function updateBullets(dt)
             bullet.vy = - bullet.vy
             bullet.x = bullet.x + vx*dt
             bullet.reflectcount = bullet.reflectcount - 1 
-        elseif map[math.floor(bullet.y/20)][math.floor(bullet.x + bullet.vx*dt)/20] ~=OPEN then 
+        elseif [math.floor(bullet.y/20)][math.floor(bullet.x + bullet.vx*dt)/20] ~=OPEN then 
             bullet.vx = - bullet.vx
             bullet.y = bullet.y + vx*dt
             bullet.reflectcount = bullet.reflectcount -1
         else 
-            bullet.x = bullet.x + vx*dt
-            bullet.y = bullet.y + vx*dt
+            bullet.x = bullet.x + bullet.vx*dt
+            bullet.y = bullet.y + bullet.vx*dt
         end
     end
 end
