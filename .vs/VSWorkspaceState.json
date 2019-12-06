@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\assets",
+    "\\game"
   ],
-  "SelectedNode": "\\TankBoyan.lua",
+  "SelectedNode": "\\Bullets.lua",
   "PreviewInSolutionExplorer": false
 }

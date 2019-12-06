@@ -8,7 +8,7 @@ function love.load()
   startX = 35
 
   --game over or not
-  gamegoingon = false;
+  gamegoingon = true;
 
 
   p1 = {}
@@ -17,12 +17,14 @@ function love.load()
   local w , h = p1.image:getDimensions()
   p1.box = HC.rectangle(startX, screenH/2, w, h)
   p1.box:setRotation(math.pi/2)
+  p1.alive = true;
 
   p2 = {}
   p2.name = "P2"
   p2.image = love.graphics.newImage("assets/tank.png")
   p2.box = HC.rectangle(screenW - h - startX, screenH/2, w, h)
   p2.box:setRotation(- math.pi/2)
+  p2.alive = true
 end
 
 function playerPlayerStop()
@@ -109,14 +111,13 @@ function love.draw()
     drawPlayer(p1)
     drawPlayer(p2)
   else
-    love.graphics.setFont( 34 )
+    font = love.graphics.newFont(34) -- the number denotes the font size
+    love.graphics.setFont( font )
     if p1.alive then
-        love.graphics.print("Game Over, P1 wins",screenW/2, screenH/2, 'center' )
+    --failed to print screedW/2
+        love.graphics.printf("Game Over, P1 wins",100, 100, 200, 'center' )
     else
-        love.graphics.print("Game Over, p2 wins",screenW/2, screenH/2, 'center' )
+        love.graphics.printf("Game Over, p2 wins",100, 100, 200, 'center' )
     end
   end
 end
-
-
-
