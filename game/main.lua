@@ -24,6 +24,8 @@ function love.load()
   p2.box = HC.rectangle(screenW - h - startX, screenH/2, w, h)
   p2.box:setRotation(- math.pi/2)
   p2.alive = true
+
+  bullets = {}
 end
 
 function playerPlayerStop()
@@ -52,6 +54,40 @@ function playerWallStop(p)
   --end
 end
 
+function shoot(p)
+    local bullet = {}
+    bullet.x = p.x
+    bullet.y = p.y
+    bullet.speed = 500
+    bullet.angle = p.angle
+    bullet.vx = v*math.sin( p.angle )
+    bullet.vy = v*math.cos( p.angle )
+    bullet.hitcircle = HC.point(bullet.x, bullet.y)
+    bullet.reflectcount = 10
+    table.insert( bullets,bullet )
+end
+
+function updateBullets(dt)
+    for i=1,#bullets do
+        local bullet = bullets[i]
+        if bullet.reflectcount <1 then 
+            table.remove(bullets, i)
+        end
+        if map[math.floor(bullet.y + bullet.vy*dt)/20][ math.floor(bullet.x/20)] ~=OPEN then 
+            bullet.vy = - bullet.vy
+            bullet.x = bullet.x + vx*dt
+            bullet.reflectcount = bullet.reflectcount - 1 
+        elseif map[math.floor(bullet.y/20)][math.floor(bullet.x + bullet.vx*dt)/20] ~=OPEN then 
+            bullet.vx = - bullet.vx
+            bullet.y = bullet.y + vx*dt
+            bullet.reflectcount = bullet.reflectcount -1
+        else 
+            bullet.x = bullet.x + vx*dt
+            bullet.y = bullet.y + vx*dt
+        end
+    end
+end
+
 function updatePlayer(p, dt)
   local speed = 200
   local angularV = math.pi/6
@@ -70,6 +106,9 @@ function updatePlayer(p, dt)
     elseif love.keyboard.isDown('d') then
       w = angularV
     end
+    if love.keyboard.isDown('space') then 
+      shoot (p)
+    end
   else
     if love.keyboard.isDown('up') then
       v = speed
@@ -80,6 +119,9 @@ function updatePlayer(p, dt)
       w = - angularV
     elseif love.keyboard.isDown('right') then
       w = angularV
+    end
+    if love.keyboard.isDown('kp0') then 
+      shoot(p)
     end
   end
 
@@ -94,12 +136,21 @@ end
 function love.update(dt)
   updatePlayer(p1, dt)
   updatePlayer(p2, dt)
+  updateBullets(dt)
 end
 
 function drawPlayer(p)
   local W, H = p.image:getDimensions()
   local x, y = p.box:center()
   love.graphics.draw(p.image, x, y, p.box:rotation(), 1, 1, W/2, H/2)
+end
+
+function drawBullets()
+    for i=1,#bullets do
+    local bullet = bullets[i]
+	love.graphics.circle('fill',bullet.x, bullet.y, 1)
+end
+
 end
 
 -- self.x = clamp(self.x + vx * dt, 0 + self.radius, nativeCanvasWidth - self.radius)
@@ -109,6 +160,7 @@ function love.draw()
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
     drawPlayer(p1)
     drawPlayer(p2)
+    drawBullets()
   else
     font = love.graphics.newFont(34) -- the number denotes the font size
     love.graphics.setFont( font )
