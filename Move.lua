@@ -45,12 +45,3 @@ function move()
     self.x = self.x + vx * dt
     self.y = self.y + vy * dt
 end
-
-function hit(bullet,tank)
-    if bullet.hitcircle:collidesWith(tank.box) then
-        tank.HP = tank.HP - Damage1
-        if tank.HP<0 then tank.alive = false
-        gamegoingon = false
-        end
-    end
-end
