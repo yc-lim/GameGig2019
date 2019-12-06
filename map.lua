@@ -5,9 +5,16 @@ green = { 0, 255, 0, 255 }
 blue = { 0, 0, 255, 255 }
 gold = { 255, 215, 0, 255 }
 
+<<<<<<< HEAD:map.lua
 x_grid_max = 130
 y_grid_max = 99
 base_size = 50
+cursor_size=25
+=======
+x_grid_max = 20
+y_grid_max = 20
+base_size = 20
+>>>>>>> 9f478e4d405f9ab906e16856b50949f5591b134e:main.lua
 
 width  = base_size*(x_grid_max+1)
 height = base_size*(y_grid_max+1)
@@ -75,34 +82,77 @@ function love.draw()
 
 	love.graphics.setColor( gold )
 
-	love.graphics.rectangle("fill", player.grid_x*base_size, player.grid_y*base_size, 10, 10)
+	love.graphics.rectangle("fill", player.grid_x*base_size, player.grid_y*base_size, cursor_size, cursor_size)
 end
+function love.update(dt)
+	if love.keyboard.isDown('right') then
+		if collide(0 , dt+0.5) and collide(0.5,dt+0.5) then
+		player.grid_x = player.grid_x + 1 * dt
+		end
+	
+	elseif love.keyboard.isDown('left') then
+		if collide(0, -dt) and collide(0.5,-dt) then
+			player.grid_x = player.grid_x - 1 * dt
+		end
 
-function love.keypressed(key)
-if key == "up" then
-	if collide(-1, 0) then
-	player.grid_y = player.grid_y - 1
-	end
-
-	elseif key == "down" then
-		if collide(1, 0) then
-		player.grid_y = player.grid_y + 1
-	end
-
-	elseif key == "left" then
-		if collide(0, -1) then
-		player.grid_x = player.grid_x - 1
-	end
-
-	elseif key == "right" then
-		if collide(0, 1) then
-		player.grid_x = player.grid_x + 1
-	end
-
-	elseif key == 'escape' then
+<<<<<<< HEAD:map.lua
+--function love.keypressed(key)
+function love.update(dt)
+	if (love.keyboard.isDown('up')) then
+		if collide(-dt-cursor_size, 0) and collide (-dt-cursor_size/base_size,cursor_size/base_size) then
+		player.grid_y = player.grid_y - dt
+		end
+	elseif (love.keyboard.isDown('down')) then
+		if collide(dt+cursor_size/base_size, 0) and collide(dt+cursor_size/base_size,cursor_size/base_size) then
+		player.grid_y = player.grid_y + dt
+		end
+	elseif (love.keyboard.isDown('left')) then
+		if collide(0, -dt) and collide(cursor_size/base_size,-dt) then
+		player.grid_x = player.grid_x - dt
+		end
+	elseif (love.keyboard.isDown('right')) then
+		if collide(0, dt+cursor_size/base_size) and collide (cursor_size/base_size,dt+cursor_size/base_size) then
+		player.grid_x = player.grid_x + dt
+		end
+	elseif (love.keyboard.isDown('escape')) then
 		love.event.push('quit')
+=======
+	elseif love.keyboard.isDown('up') then
+		if collide(-dt, 0) then
+			player.grid_y = player.grid_y - 1 * dt
+			end
+	elseif love.keyboard.isDown('down') then
+		if collide(dt+0.5, 0.5) then
+			player.grid_y = player.grid_y + 1 * dt
+		end
+>>>>>>> 9f478e4d405f9ab906e16856b50949f5591b134e:main.lua
 	end
 end
+-- if key == "up" then
+-- 	if collide(-1, 0) then
+-- 	player.grid_y = player.grid_y - 0.5
+-- 	end
+
+-- 	elseif key == "down" then
+-- 		if collide(1, 0) then
+-- 		player.grid_y = player.grid_y + 0.5
+-- 	end
+
+-- 	elseif key == "left" then
+-- 		if collide(0, -1) then
+-- 		player.grid_x = player.grid_x - 0.5
+-- 	end
+
+-- 	elseif key == "right" then
+-- 		if collide(0, 1) then
+-- 		player.grid_x = player.grid_x + 0.5
+-- 	end
+
+-- 	elseif key == 'escape' then
+-- 		love.event.push('quit')
+-- 	end
+--end
+
 
 function generate_maze()
 	map = {}
@@ -180,32 +230,22 @@ end
 end
 
 function rand_key(hash)
-
 ks = {}
-
 for k,v in pairs(hash) do table.insert(ks, k) end
-
 return ks[math.random(1, #ks)]
-
 end
 
 function is_open(map, y, x)
-
 if map[y][x] == OPEN then
-
 return true
-
 else
-
 return false
-
 end
-
 end
 
 
 function collide(y, x)
-if map[player.grid_y + y][player.grid_x + x] ~= OPEN then
+if map[math.floor(player.grid_y + y)][math.floor(player.grid_x + x)] ~= OPEN then
 	return false
 end
 return true
